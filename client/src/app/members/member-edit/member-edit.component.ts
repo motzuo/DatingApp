@@ -40,7 +40,7 @@ export class MemberEditComponent implements OnInit {
 
   updateMember(){
     this.memberService.updateMember(this.member).subscribe({
-      complete: () => {
+      next: () => {
         this.toastr.success("Profile updated successfully!");
         this.editForm.reset(this.member);
       }
