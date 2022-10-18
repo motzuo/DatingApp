@@ -11,7 +11,13 @@ namespace API.Extensions
     {
         public static string GetUsername(this ClaimsPrincipal user)
         {
-            return user.FindFirst(JwtRegisteredClaimNames.Name)?.Value;
+            return user.FindFirst(ClaimTypes.Name)?.Value;
+        }
+
+        public static int GetUserId(this ClaimsPrincipal user)
+        {
+            if(int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int id)) return id;
+            return -1;
         }
     }
 }
