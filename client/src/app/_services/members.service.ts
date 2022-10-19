@@ -1,10 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { LikeParams } from '../_models/likeParams';
 import { Member } from '../_models/member';
 import { PaginatedResult } from '../_models/pagination';
+import { PaginationParams } from '../_models/PaginationParams';
 import { User } from '../_models/user';
 import { UserParams } from '../_models/userParams';
 import { AccountService } from './account.service';
@@ -49,7 +51,7 @@ export class MembersService {
     }
 
 
-    let params = this.getPaginationHeaders(userParams);
+    let params = this.getUsersPaginationHeaders(userParams);
 
     return this.getPaginatedResult<Member[]>(this.baseUrl + 'users', params).pipe(
       map(response => {
@@ -85,6 +87,17 @@ export class MembersService {
     return this.http.delete(this.baseUrl + 'users/delete-photo/' + photoId);
   }
 
+  addLike(username: string) {
+    return this.http.post(this.baseUrl + "likes/" + username, {});
+  }
+
+  getLikes(likeParams: LikeParams) {
+    let params = this.getLikesPaginationHeaders(likeParams);
+    return this.getPaginatedResult<Partial<Member[]>>(this.baseUrl + 'likes', params);
+  }
+
+
+
   private generateKey(params: UserParams) : string {
     return Object.values(params).join('-');
   }
@@ -102,15 +115,30 @@ export class MembersService {
     );
   }
   
-  private getPaginationHeaders(userParams: UserParams) {
+  private getPaginationHeaders(pagParams: PaginationParams) {
     let params = new HttpParams();
   
-    params = params.append("pageNumber", userParams.pageNumber.toString());
-    params = params.append("pageSize", userParams.pageSize.toString());
+    params = params.append("pageNumber", pagParams.pageNumber.toString());
+    params = params.append("pageSize", pagParams.pageSize.toString());
+  
+    return params;
+  }
+
+  private getUsersPaginationHeaders(userParams: UserParams) {
+    let params = this.getPaginationHeaders(userParams);
+  
     params = params.append("minAge", userParams.minAge.toString());
     params = params.append("maxAge", userParams.maxAge.toString());
     params = params.append("gender", userParams.gender);
     params = params.append("orderBy", userParams.orderBy);
+  
+    return params;
+  }
+
+  private getLikesPaginationHeaders(likeParams: LikeParams) {
+    let params = this.getPaginationHeaders(likeParams);
+  
+    params = params.append("predicate", likeParams.predicate);
   
     return params;
   }
