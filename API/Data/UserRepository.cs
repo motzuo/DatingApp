@@ -22,12 +22,15 @@ namespace API.Data
             _context = context;
         }
 
-        public async Task<MemberDto> GetMemberAsync(string username)
+        public async Task<MemberDto> GetMemberAsync(string username, bool self)
         {
-            return await _context.Users
+            var query = _context.Users
                 .Where(x => x.UserName == username)
-                .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
-                .SingleOrDefaultAsync();
+                .ProjectTo<MemberDto>(_mapper.ConfigurationProvider);
+
+            if (self) query = query.IgnoreQueryFilters();
+
+            return await query.SingleOrDefaultAsync();
         }
 
         public async Task<PagedList<MemberDto>> GetMembersAsync(UserParams userParams)
@@ -37,7 +40,7 @@ namespace API.Data
             query = query.Where(u => u.UserName != userParams.CurrentUsername);
             query = query.Where(u => u.Gender == userParams.Gender);
 
-            var minDob = DateTime.Today.AddYears(-userParams.MaxAge-1);
+            var minDob = DateTime.Today.AddYears(-userParams.MaxAge - 1);
             var maxDob = DateTime.Today.AddYears(-userParams.MinAge);
 
             query = query.Where(u => u.DateOfBirth >= minDob && u.DateOfBirth <= maxDob);
@@ -57,11 +60,13 @@ namespace API.Data
             return await _context.Users.FindAsync(id);
         }
 
-        public async Task<AppUser> GetUserByUsernameAsync(string username)
+        public async Task<AppUser> GetUserByUsernameAsync(string username, bool self = false)
         {
-            return await _context.Users
-                .Include(p => p.Photos)
-                .SingleOrDefaultAsync(x => x.UserName == username);
+            var query = _context.Users.Include(p => p.Photos).AsQueryable();
+
+            if (self) query = query.IgnoreQueryFilters();
+
+            return await query.SingleOrDefaultAsync(x => x.UserName == username);
         }
 
         public async Task<string> GetUserGender(string username)
@@ -75,7 +80,7 @@ namespace API.Data
                 .Include(p => p.Photos)
                 .ToListAsync();
         }
-        
+
 
         public void Update(AppUser user)
         {
